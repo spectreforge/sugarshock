@@ -2,7 +2,7 @@
 	"name": "sugarshock",
 	"private": true,
 	"description": "a showcase repository for Twine SugarCube 2",
-	"packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8",
+	"packageManager": "yarn@4.18.1+sha512.b2e1e7524f654f2749d32b4ebcb4622473cb5bcbc485df2007e12a154e50162a4d795526768bc5f5b8f81717bfd79deb2472813d86fb5ae2eb551fa9c872b08f",
 	"scripts": {
 		"build": "tweego --format=sugarcube-2 --output index.html --head=src/head-content.html src/twee",
 		"build-single": "tweego --format=sugarcube-2 --output index.html src/twee-single",
