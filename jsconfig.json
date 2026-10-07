@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"module": "none",
+		"target": "esnext",
+		"jsx": "react-jsx",
+		"checkJs": true,
+		"experimentalDecorators": false,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strict": true
+	},
+	"exclude": [
+		"node_modules",
+		"**/node_modules/*"
+	]
+}

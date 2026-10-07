@@ -11,6 +11,8 @@
 	},
 	"devDependencies": {
 		"@types/serviceworker": "^0.0.172",
-		"@types/twine-sugarcube": "~2.37.2"
+		"@types/twine-sugarcube": "~2.37.2",
+		"prettier": "^3.9.9",
+		"typescript": "~6.0.3"
 	}
 }
