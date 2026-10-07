@@ -1,0 +1,34 @@
+:: StoryData
+{
+	"ifid": "a640592d-434f-4f70-a99d-5e02651214b7",
+	"format": "SugarCube",
+	"format-version": "2.37.3"
+}
+
+:: StoryTitle
+SugarShock Oneshot
+
+:: StoryInit
+
+:: Start
+
+<<do>>
+	<<if def $key and $key isnot "grace">>
+		You have the <<= $key>> key.
+	<<else>>
+		You do not have a key.
+	<</if>>
+<</do>>
+
+<<link "grace key display">>
+	<<set $key = "grace">>
+	<<redo>>
+<</link>>
+<<link "non-grace display">>
+	<<set $key = "non-grace">>
+	<<redo>>
+<</link>>
+<<link "remove key">>
+	<<unset $key>>
+	<<redo>>
+<</link>>
