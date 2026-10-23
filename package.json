@@ -9,7 +9,13 @@
 		"watch": "tweego --format=sugarcube-2 --output index.html --head=src/head-content.html --watch src/twee",
 		"gen-asset-index": "b3sum index.html > assets/offline-index.txt && fd -tf -I -g -E 'offline-index.txt' '*' assets -X b3sum >> assets/offline-index.txt"
 	},
+	"workspaces": [
+		"packages/*"
+	],
 	"devDependencies": {
+		"@rollup/plugin-typescript": "^12.3.0",
+		"@spectreforge/tiny-jsx2dom": "workspace:^",
+		"@types/node": "~22",
 		"@types/serviceworker": "^0.0.172",
 		"@types/twine-sugarcube": "~2.37.2",
 		"prettier": "^3.9.9",

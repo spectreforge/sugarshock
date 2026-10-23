@@ -1,0 +1,34 @@
+{
+	"compilerOptions": {
+		"target": "es2025",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"verbatimModuleSyntax": true,
+		"erasableSyntaxOnly": false,
+		"types": [],
+		"lib": [
+			"ES2025",
+			"DOM"
+		],
+		"strict": true,
+		"exactOptionalPropertyTypes": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"noUncheckedSideEffectImports": true,
+		"rootDir": "./src",
+		"outDir": "./build",
+		"declaration": true,
+		"isolatedDeclarations": true,
+		"noEmit": false
+	},
+	"include": [
+		"src"
+	]
+}
