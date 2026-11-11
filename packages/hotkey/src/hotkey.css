@@ -1,0 +1,309 @@
+/*
+ * The plugin relies on CSS to render the shortcut hints, otherwise the styles
+ * are only concerned with and scoped to the keyboard settings dialog.
+ *
+ * The keyboard settings dialog has been styled to mostly match the save dialog.
+ *
+ * Theming
+ * =======
+ * The plugin allows you to use your own colour scheme without modifying the
+ * stylesheet through the following CSS custom properties (aka CSS variables):
+ * - `--hotkey-chip-bg`: background of the key chips
+ * - `--hotkey-border`: borders of chips, table header and buttons
+ * - `--hotkey-muted`: secondary text (table header, help, status, add chip)
+ * - `--hotkey-accent`: capturing add chip, hovered plain icon buttons
+ * - `--hotkey-danger`: hovered `--danger` icon buttons (reset, remove)
+ * You can just set them at any parent selector (e.g. :root) and they will take
+ * precedence.
+ *
+ * Every other custom property (`--_hotkey-*`, and `--hotkey-space`) is  private
+ * and shouldn't be touched.
+ */
+
+/*
+ * Spacing scale: every padding, margin and gap is a multiple of this unit.
+ *
+ * We register it here as a <length> unit to let `em` be resolved once at the
+ * dialog selector level and not at the individual element level where the font
+ * size might be `smaller`.
+ */
+@property --hotkey-space {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 4px;
+}
+
+/*
+ * Rendering of the hint attribute; we use attributes to avoid modifying the
+ * links content which can get copied by SC in some instances (see
+ * `hotkey-link-tracker.ts` for rationale).
+ *
+ * SC's icons take `::after` on external links (and `[data-icon-after]`) with
+ * `font-family: sc-icons !important`. I'm not joining a `!important` fig,
+ * therefore we show the hint in front of those links.
+ */
+a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
+a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
+	vertical-align: super;
+	/* screen readers are served by aria props => no alt text */
+	content: "[" attr(data-hotkey-hint) "]" / "";
+	font-size: smaller;
+	/* don't balloon lines with hints */
+	line-height: 0;
+}
+
+/*
+ * To gain higher specificity than SC's own rules, we nest everything below the
+ * dialog element id.
+ */
+#ui-dialog-body.hotkey-settings-dialog {
+	--hotkey-space: 0.25em;
+
+	/*
+	 * We mix the defaults from `currentColor` and `transparent`, i.e. should
+	 * allow them to work with both light and dark themes even without explicit
+	 * customization.
+	 *
+	 * Text on accent and danger backgrounds is always `#eee`, like
+	 * SC's buttons.
+	 */
+	--_hotkey-chip-bg: var(
+		--hotkey-chip-bg,
+		color-mix(in srgb, currentColor 8%, transparent)
+	);
+	--_hotkey-border: var(
+		--hotkey-border,
+		color-mix(in srgb, currentColor 25%, transparent)
+	);
+	--_hotkey-muted: var(
+		--hotkey-muted,
+		color-mix(in srgb, currentColor 60%, transparent)
+	);
+	--_hotkey-accent: var(--hotkey-accent, #57c);
+	--_hotkey-danger: var(--hotkey-danger, #b33);
+
+	.hotkey-settings__table {
+		width: 100%;
+		line-height: 1.3;
+
+		th,
+		td {
+			padding: calc(var(--hotkey-space) * 2) var(--hotkey-space);
+
+			&:last-child {
+				text-align: end;
+			}
+		}
+
+		th {
+			font-weight: normal;
+			text-align: start;
+		}
+
+		thead th {
+			border-bottom: 1px solid var(--_hotkey-border);
+			color: var(--_hotkey-muted);
+			font-size: 75%;
+			text-transform: uppercase;
+		}
+
+		tbody th {
+			/* otherwise the greedy shortcuts column squeezes it to min-content */
+			white-space: nowrap;
+		}
+	}
+
+	/* hidden visually but still available for assistive technologies */
+	.hotkey-visually-hidden {
+		position: absolute;
+		clip-path: inset(50%);
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.hotkey-settings__shortcuts {
+		/* greedy to take as much room for shortcut chips as possible */
+		width: 100%;
+	}
+
+	.hotkey-chip-list {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--hotkey-space);
+		/* fits the add chip next to e.g. Meta+Ctrl+Alt+Shift+O on default settings */
+		min-width: 17em;
+	}
+
+	.hotkey-chip {
+		display: inline-flex;
+		align-items: center;
+		border: 1px solid var(--_hotkey-border);
+		border-radius: 0.2em;
+		background-color: var(--_hotkey-chip-bg);
+		/* clip the remove button's hover background to the rounded corners */
+		overflow: hidden;
+		white-space: nowrap;
+
+		> kbd {
+			padding: 0 calc(var(--hotkey-space) * 2);
+		}
+	}
+
+	/* "add" chip for adding a shortcut: dashed and muted so it can't be mistaken for a key */
+	.hotkey-chip--add {
+		gap: calc(var(--hotkey-space) * 2);
+		border: 1px dashed color-mix(in srgb, currentColor 70%, transparent);
+		background-color: transparent;
+		padding: 0 calc(var(--hotkey-space) * 2);
+		/* match the height of the key chips (line height + borders) */
+		min-height: calc(1lh + 2px);
+		color: var(--_hotkey-muted);
+		/* undo SC's `button { line-height: normal }` => 1lh matches the key chips */
+		line-height: inherit;
+
+		&::before {
+			content: "\f067" / ""; /* plus; the title names the button => no alt text */
+			font-size: 70%;
+			font-family: sc-icons;
+		}
+
+		&:hover {
+			border-color: currentColor;
+			background-color: color-mix(in srgb, currentColor 15%, transparent);
+			color: inherit;
+		}
+
+		&:not([aria-pressed="true"]) .hotkey-chip__prompt {
+			display: none;
+		}
+
+		&[aria-pressed="true"] {
+			border-style: solid;
+			border-color: color-mix(in srgb, var(--_hotkey-accent), white 25%);
+			background-color: var(--_hotkey-accent);
+			color: #eee;
+
+			@media (prefers-reduced-motion: no-preference) {
+				animation: hotkey-capturing 1s ease-in-out infinite alternate;
+			}
+		}
+	}
+
+	.hotkey-settings__hint {
+		padding: calc(var(--hotkey-space) / 2) var(--hotkey-space);
+		width: 3.5em;
+		/* overrides SC's `input[type=text] { min-width: 18em }` */
+		min-width: 0;
+		text-align: center;
+
+		&:placeholder-shown {
+			border-style: dashed;
+		}
+
+		&::placeholder {
+			opacity: 1;
+			color: var(--_hotkey-muted);
+		}
+	}
+
+	.hotkey-icon-button {
+		--_hotkey-button-highlight: var(--_hotkey-accent);
+
+		background-color: transparent;
+		padding: 0;
+		color: inherit;
+		line-height: 1;
+		font-family: sc-icons;
+
+		&:hover,
+		&:focus-visible {
+			border-color: color-mix(
+				in srgb,
+				var(--_hotkey-button-highlight),
+				white 20%
+			);
+			background-color: var(--_hotkey-button-highlight);
+			color: #eee;
+		}
+	}
+
+	/* red like SC's save deletion buttons */
+	.hotkey-icon-button--danger {
+		--_hotkey-button-highlight: var(--_hotkey-danger);
+	}
+
+	.hotkey-settings__reset {
+		border-color: var(--_hotkey-border);
+		width: 1.9em;
+		height: 1.9em;
+		font-size: 85%;
+
+		&::before {
+			content: "\f2ea" / ""; /* undo */
+		}
+	}
+
+	.hotkey-chip__remove {
+		align-self: stretch;
+		border: none;
+		border-left: 1px solid var(--_hotkey-border);
+		padding: 0 calc(var(--hotkey-space) * 2);
+		font-size: 70%;
+
+		&::before {
+			content: "\f2ed" / ""; /* trash can */
+		}
+	}
+
+	.hotkey-settings__help {
+		margin-top: calc(var(--hotkey-space) * 2);
+
+		> summary {
+			cursor: pointer;
+			color: var(--_hotkey-muted);
+
+			&:hover {
+				color: inherit;
+			}
+		}
+
+		> ul {
+			margin: var(--hotkey-space) 0 0;
+			padding-inline-start: calc(var(--hotkey-space) * 5);
+			line-height: 1.6;
+		}
+
+		.hotkey-chip {
+			vertical-align: middle;
+		}
+	}
+
+	.hotkey-settings__footer {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		align-items: center;
+		gap: calc(var(--hotkey-space) * 2);
+		margin-top: calc(var(--hotkey-space) * 2);
+	}
+
+	.hotkey-settings__status {
+		/* fill the space next to the button */
+		flex: 1 1 15em;
+		/* the message should not widen the dialog */
+		contain: inline-size;
+		margin: 0;
+		/* prevent dialog height jittering due to status message length */
+		min-height: 2lh;
+		color: var(--_hotkey-muted);
+	}
+}
+
+@keyframes hotkey-capturing {
+	to {
+		background-color: color-mix(in srgb, var(--_hotkey-accent), black 25%);
+	}
+}

@@ -1,0 +1,15 @@
+:: StoryData
+{
+	"ifid": "a640592d-434f-4f70-a99d-5e02651214b7",
+	"format": "SugarCube",
+	"format-version": "2.37.3"
+}
+
+:: StoryTitle
+SugarShock Scratchpad
+
+:: StoryInit
+
+:: Start
+
+Do your thing here.

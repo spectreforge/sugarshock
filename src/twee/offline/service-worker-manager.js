@@ -1,9 +1,8 @@
-
 function initServiceWorkerManager() {
-	if (origin === 'null' || !isSecureContext) {
+	if (origin === "null" || !isSecureContext) {
 		return;
 	}
-	if (!('serviceWorker' in navigator)) {
+	if (!("serviceWorker" in navigator)) {
 		console.warn("Service workers are not supported in this browser.");
 		return;
 	}
@@ -19,11 +18,12 @@ function initServiceWorkerManager() {
 			return;
 		}
 
-		navigator.serviceWorker.register("./service-worker.js", {
-			scope: "./",
-			type: "module",
-			updateViaCache: "none",
-		})
+		navigator.serviceWorker
+			.register("./service-worker.js", {
+				scope: "./",
+				type: "module",
+				updateViaCache: "none",
+			})
 			.then((registration_) => {
 				if (!settings.offlineMode) {
 					registration_.unregister().catch(console.error);
@@ -47,18 +47,26 @@ function initServiceWorkerManager() {
 		const scopePath = new URL("./", location.href).pathname;
 		const cacheName = `ioV9x-${scopePath}-offline-v1`;
 		const dbName = `ioV9x-${scopePath}-offline-index`;
-		console.log("Cleaning up cached data for offline mode.", { cacheName, dbName });
+		console.log("Cleaning up cached data for offline mode.", {
+			cacheName,
+			dbName,
+		});
 
 		if (caches.has(cacheName)) {
 			caches.delete(cacheName).catch(console.error);
 		}
 
 		const deleteRequest = indexedDB.deleteDatabase(dbName);
-		deleteRequest.addEventListener('error', (event) => {
-			console.error('Failed to delete offline asset index database:', event.target.error);
+		deleteRequest.addEventListener("error", (event) => {
+			console.error(
+				"Failed to delete offline asset index database:",
+				event.target.error,
+			);
 		});
-		deleteRequest.addEventListener('blocked', () => {
-			console.warn('Deletion of offline asset index database is blocked. Close other tabs using this application.');
+		deleteRequest.addEventListener("blocked", () => {
+			console.warn(
+				"Deletion of offline asset index database is blocked. Close other tabs using this application.",
+			);
 		});
 	}
 }

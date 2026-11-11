@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"module": "preserve",
+		"target": "esnext",
+		"jsx": "react-jsx",
+		"checkJs": true,
+		"experimentalDecorators": false,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strict": true
+	},
+	"exclude": ["packages", "node_modules", "**/node_modules/*"]
+}

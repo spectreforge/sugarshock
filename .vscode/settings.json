@@ -4,5 +4,5 @@
 		"editor.semanticHighlighting.enabled": true,
 		"editor.wordWrap": "wordWrapColumn",
 		"editor.wordWrapColumn": 80
-	},
+	}
 }

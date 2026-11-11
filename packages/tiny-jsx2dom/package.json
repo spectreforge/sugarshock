@@ -1,0 +1,22 @@
+{
+	"name": "@spectreforge/tiny-jsx2dom",
+	"type": "module",
+	"private": true,
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./build/index.d.mts",
+			"default": "./build/index.mjs"
+		},
+		"./jsx-runtime": {
+			"types": "./build/jsx-runtime.d.mts",
+			"default": "./build/jsx-runtime.mjs"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p ."
+	},
+	"devDependencies": {
+		"typescript": "~6.0.3"
+	}
+}
