@@ -56,7 +56,7 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latestm
+    runs-on: ubuntu-latest
     environment: npm
     permissions:
       contents: read
@@ -78,7 +78,7 @@ jobs:
       - name: Publish
         env:
           DIST_TAG: ${{ needs.build.outputs.dist-tag }}
-        run: yarn workspace @spectreforge/sugarcube-hotkey npm publish --provenance --access public --tag "$DIST_TAG"
+        run: yarn workspace @spectreforge/sugarcube-hotkey npm publish --staged --provenance --access public --tag "$DIST_TAG"
 
   # for Twine users who can't install packages
   release:
