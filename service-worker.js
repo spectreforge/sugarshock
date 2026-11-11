@@ -1,60 +1,70 @@
 /// <reference lib="webworker" />
 /// <reference types="serviceworker" />
 
-const IDB_STORE_ASSET = 'asset';
-const IDB_KEY_OFFLINE_INDEX = 'offline-index.txt';
+const IDB_STORE_ASSET = "asset";
+const IDB_KEY_OFFLINE_INDEX = "offline-index.txt";
 
 let refreshCachePromise = null;
 const scopePath = new URL(self.registration.scope).pathname;
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener("install", () => self.skipWaiting());
 
-self.addEventListener('activate', (event) =>
-	event.waitUntil(synchronizedRefreshCache())
+self.addEventListener("activate", (event) =>
+	event.waitUntil(synchronizedRefreshCache()),
 );
 
-self.addEventListener('fetch', (event) => event.respondWith(
-	(async () => {
-		/** @type {Request} */
-		const request = event.request;
-		const requestPath = new URL(request.url).pathname;
+self.addEventListener("fetch", (event) =>
+	event.respondWith(
+		(async () => {
+			/** @type {Request} */
+			const request = event.request;
+			const requestPath = new URL(request.url).pathname;
 
-		if (refreshCachePromise != null) {
-			// avoid serving stale content during cache refresh
-			return fetch(event.request);
-		}
-		if (['', 'index.html'].includes(requestPath.slice(scopePath.length))) {
-			let offlineAssetIndexDB;
-			let cachedIndex;
-			try {
-				offlineAssetIndexDB = await initOfflineAssetIndex();
-				cachedIndex = await idbGet(offlineAssetIndexDB, IDB_STORE_ASSET, IDB_KEY_OFFLINE_INDEX);
-			} catch (error) {
-				console.error('Failed to retrieve offline index entry:', error);
+			if (refreshCachePromise != null) {
+				// avoid serving stale content during cache refresh
+				return fetch(event.request);
 			}
-			if (offlineAssetIndexDB != null) {
-				const assetIndex = await fetchAssetIndex(cachedIndex?.lastModified);
-				if (assetIndex != null && assetIndex.hash !== cachedIndex?.hash) {
-					// defer cache refresh to avoid blocking the fetch
-					synchronizedRefreshCache(assetIndex, offlineAssetIndexDB).catch((error) => {
-						console.error('Failed to refresh offline cache:', error);
-					});
-					return fetch(event.request);
+			if (["", "index.html"].includes(requestPath.slice(scopePath.length))) {
+				let offlineAssetIndexDB;
+				let cachedIndex;
+				try {
+					offlineAssetIndexDB = await initOfflineAssetIndex();
+					cachedIndex = await idbGet(
+						offlineAssetIndexDB,
+						IDB_STORE_ASSET,
+						IDB_KEY_OFFLINE_INDEX,
+					);
+				} catch (error) {
+					console.error("Failed to retrieve offline index entry:", error);
 				}
-				offlineAssetIndexDB.close();
+				if (offlineAssetIndexDB != null) {
+					const assetIndex = await fetchAssetIndex(cachedIndex?.lastModified);
+					if (assetIndex != null && assetIndex.hash !== cachedIndex?.hash) {
+						// defer cache refresh to avoid blocking the fetch
+						synchronizedRefreshCache(assetIndex, offlineAssetIndexDB).catch(
+							(error) => {
+								console.error("Failed to refresh offline cache:", error);
+							},
+						);
+						return fetch(event.request);
+					}
+					offlineAssetIndexDB.close();
+				}
 			}
-		}
 
-		return (await caches.match(request)) ?? fetch(event.request);
-	})()
-));
+			return (await caches.match(request)) ?? fetch(event.request);
+		})(),
+	),
+);
 
 async function synchronizedRefreshCache(cachedAssetIndex, offlineAssetIndexDB) {
 	if (refreshCachePromise == null) {
-		refreshCachePromise = refreshCache(cachedAssetIndex, offlineAssetIndexDB)
-			.finally(() => {
-				refreshCachePromise = null;
-			});
+		refreshCachePromise = refreshCache(
+			cachedAssetIndex,
+			offlineAssetIndexDB,
+		).finally(() => {
+			refreshCachePromise = null;
+		});
 	}
 	return refreshCachePromise;
 }
@@ -74,25 +84,29 @@ async function refreshCache(cachedAssetIndex, offlineAssetIndexDB) {
 	}
 
 	const previouslyKnownEntries = await new Promise((resolve) => {
-		const getDbRequest = offlineAssetIndex.transaction(IDB_STORE_ASSET, 'readwrite')
+		const getDbRequest = offlineAssetIndex
+			.transaction(IDB_STORE_ASSET, "readwrite")
 			.objectStore(IDB_STORE_ASSET)
 			.getAllKeys();
-		getDbRequest.addEventListener('success', (event) => {
+		getDbRequest.addEventListener("success", (event) => {
 			/**
 			 * @type {string[]}
 			 */
 			resolve(event.target.result);
 		});
-		getDbRequest.addEventListener('error', (event) => {
-			console.error('Failed to retrieve known asset entries:', event.target.error);
+		getDbRequest.addEventListener("error", (event) => {
+			console.error(
+				"Failed to retrieve known asset entries:",
+				event.target.error,
+			);
 			/** @type {IDBObjectStore} */
 			const store = event.source;
 			const clearRequest = store.clear();
-			clearRequest.addEventListener('success', () => {
+			clearRequest.addEventListener("success", () => {
 				resolve([]);
 			});
-			clearRequest.addEventListener('error', (innerEvent) => {
-				console.error('Failed to clear asset store:', innerEvent.target.error);
+			clearRequest.addEventListener("error", (innerEvent) => {
+				console.error("Failed to clear asset store:", innerEvent.target.error);
 				reject(innerEvent.target.error);
 			});
 		});
@@ -103,37 +117,48 @@ async function refreshCache(cachedAssetIndex, offlineAssetIndexDB) {
 				try {
 					await idbDelete(offlineAssetIndex, IDB_STORE_ASSET, path);
 				} catch (error) {
-					console.error(`Failed to delete asset index entry for missing cache entry (${path}):`, error);
+					console.error(
+						`Failed to delete asset index entry for missing cache entry (${path}):`,
+						error,
+					);
 				}
 			}
-		})
+		}),
 	);
 
 	await Promise.all(
-		assetIndex.entries.map(entry =>
-			updateOfflineAsset(entry, cache, offlineAssetIndex)
-		)
+		assetIndex.entries.map((entry) =>
+			updateOfflineAsset(entry, cache, offlineAssetIndex),
+		),
 	);
 
-	const knownPaths = new Set(assetIndex.entries.map(entry => entry.path));
+	const knownPaths = new Set(assetIndex.entries.map((entry) => entry.path));
 	await Promise.all(
 		previouslyKnownEntries
-			.filter(path => !knownPaths.has(path))
-			.map(async path => {
+			.filter((path) => !knownPaths.has(path))
+			.map(async (path) => {
 				try {
 					await idbDelete(offlineAssetIndex, IDB_STORE_ASSET, path);
 				} catch (error) {
-					console.error(`Failed to delete obsolete asset index entry (${path}):`, error);
+					console.error(
+						`Failed to delete obsolete asset index entry (${path}):`,
+						error,
+					);
 				}
-			})
+			}),
 	);
 	const cacheKeys = await cache.keys();
 	await Promise.all(
 		cacheKeys
-			.filter(request => !knownPaths.has('./' + new URL(request.url).pathname.slice(scopePath.length)))
-			.map(async request => {
+			.filter(
+				(request) =>
+					!knownPaths.has(
+						"./" + new URL(request.url).pathname.slice(scopePath.length),
+					),
+			)
+			.map(async (request) => {
 				await cache.delete(request);
-			})
+			}),
 	);
 
 	await idbPut(offlineAssetIndex, IDB_STORE_ASSET, {
@@ -169,19 +194,19 @@ async function updateOfflineAsset(entry, cache, db) {
 async function initOfflineAssetIndex() {
 	const openRequest = indexedDB.open(`ioV9x-${scopePath}-offline-index`, 1);
 	const { promise, resolve, reject } = Promise.withResolvers();
-	openRequest.addEventListener('upgradeneeded', (event) => {
+	openRequest.addEventListener("upgradeneeded", (event) => {
 		/** @type {IDBDatabase} */
 		const db = event.target.result;
 		if (!db.objectStoreNames.contains(IDB_STORE_ASSET)) {
-			db.createObjectStore(IDB_STORE_ASSET, { keyPath: 'path' });
+			db.createObjectStore(IDB_STORE_ASSET, { keyPath: "path" });
 		}
 	});
-	openRequest.addEventListener('success', (event) => {
+	openRequest.addEventListener("success", (event) => {
 		/** @type {IDBDatabase} */
 		const db = event.target.result;
 		resolve(db);
 	});
-	openRequest.addEventListener('error', (event) => {
+	openRequest.addEventListener("error", (event) => {
 		reject(event.target.error);
 	});
 	return promise;
@@ -196,13 +221,14 @@ async function initOfflineAssetIndex() {
  */
 function idbGet(db, storeName, key) {
 	const { promise, resolve, reject } = Promise.withResolvers();
-	const getRequest = db.transaction(storeName, 'readonly')
+	const getRequest = db
+		.transaction(storeName, "readonly")
 		.objectStore(storeName)
 		.get(key);
-	getRequest.addEventListener('success', (event) => {
+	getRequest.addEventListener("success", (event) => {
 		resolve(event.target.result);
 	});
-	getRequest.addEventListener('error', (event) => {
+	getRequest.addEventListener("error", (event) => {
 		reject(event.target.error);
 	});
 	return promise;
@@ -216,13 +242,14 @@ function idbGet(db, storeName, key) {
  */
 function idbPut(db, storeName, value) {
 	const { promise, resolve, reject } = Promise.withResolvers();
-	const putRequest = db.transaction(storeName, 'readwrite')
+	const putRequest = db
+		.transaction(storeName, "readwrite")
 		.objectStore(storeName)
 		.put(value);
-	putRequest.addEventListener('success', () => {
+	putRequest.addEventListener("success", () => {
 		resolve();
 	});
-	putRequest.addEventListener('error', (event) => {
+	putRequest.addEventListener("error", (event) => {
 		reject(event.target.error);
 	});
 	return promise;
@@ -237,13 +264,14 @@ function idbPut(db, storeName, value) {
  */
 function idbDelete(db, storeName, key) {
 	const { promise, resolve, reject } = Promise.withResolvers();
-	const deleteRequest = db.transaction(storeName, 'readwrite')
+	const deleteRequest = db
+		.transaction(storeName, "readwrite")
 		.objectStore(storeName)
 		.delete(key);
-	deleteRequest.addEventListener('success', () => {
+	deleteRequest.addEventListener("success", () => {
 		resolve();
 	});
-	deleteRequest.addEventListener('error', (event) => {
+	deleteRequest.addEventListener("error", (event) => {
 		reject(event.target.error);
 	});
 	return promise;
@@ -254,39 +282,39 @@ function idbDelete(db, storeName, key) {
  */
 async function fetchAssetIndex(lastModified) {
 	try {
-		const response = await fetch('./assets/offline-index.txt', {
-			cache: 'no-store',
+		const response = await fetch("./assets/offline-index.txt", {
+			cache: "no-store",
 			headers: {
-				'Accept': 'text/plain',
-				...(lastModified ? { 'If-Modified-Since': lastModified } : {}),
-			}
+				Accept: "text/plain",
+				...(lastModified ? { "If-Modified-Since": lastModified } : {}),
+			},
 		});
 		if (!response.ok) {
 			return null;
 		}
 
 		const utf8Text = await response.bytes();
-		const indexHash = crypto.subtle.digest('SHA-256', utf8Text);
+		const indexHash = crypto.subtle.digest("SHA-256", utf8Text);
 		const text = new TextDecoder().decode(utf8Text);
-		const index = text.split('\n')
-			.filter(line => line.length > 0)
+		const index = text
+			.split("\n")
+			.filter((line) => line.length > 0)
 			.map(parseAssetIndexEntry);
 
-		const indexHtmlEntry = index.find(e => e.path === './index.html');
+		const indexHtmlEntry = index.find((e) => e.path === "./index.html");
 		if (indexHtmlEntry) {
 			index.unshift({
 				hash: indexHtmlEntry.hash,
-				path: './',
+				path: "./",
 			});
 		}
 
 		return {
 			hash: toHex(await indexHash),
-			lastModified: response.headers.get('Last-Modified') ?? undefined,
+			lastModified: response.headers.get("Last-Modified") ?? undefined,
 			entries: index,
 		};
-	}
-	catch (error) {
+	} catch (error) {
 		return null;
 	}
 }
@@ -295,14 +323,14 @@ async function fetchAssetIndex(lastModified) {
  * @param {string} line
  */
 function parseAssetIndexEntry(line) {
-	const delimiterIndex = line.indexOf('  ');
+	const delimiterIndex = line.indexOf("  ");
 	let hash = line.slice(0, delimiterIndex);
 	let path = line.slice(delimiterIndex + 2);
-	if (line.charAt(0) === '\\') {
+	if (line.charAt(0) === "\\") {
 		hash = hash.slice(1);
-		path = path.replaceAll('\\n', '\n').replaceAll('\\\\', '\\');
+		path = path.replaceAll("\\n", "\n").replaceAll("\\\\", "\\");
 	}
-	if (!path.startsWith('./')) {
+	if (!path.startsWith("./")) {
 		path = `./${path}`;
 	}
 	return { hash, path };
@@ -312,10 +340,8 @@ function parseAssetIndexEntry(line) {
  * @param {ArrayBuffer} arrayBuffer
  * @returns {string}
  */
-function toHex(arrayBuffer)
-{
-	return Array.prototype.map.call(
-		new Uint8Array(arrayBuffer),
-		n => n.toString(16).padStart(2, '0')
-	).join('');
+function toHex(arrayBuffer) {
+	return Array.prototype.map
+		.call(new Uint8Array(arrayBuffer), (n) => n.toString(16).padStart(2, "0"))
+		.join("");
 }
