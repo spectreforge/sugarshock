@@ -6,29 +6,10 @@
 }
 
 :: StoryTitle
-SugarShock Oneshot
+SugarShock Scratchpad
 
 :: StoryInit
 
 :: Start
 
-<<do>>
-	<<if def $key and $key isnot "grace">>
-		You have the <<= $key>> key.
-	<<else>>
-		You do not have a key.
-	<</if>>
-<</do>>
-
-<<link "grace key display">>
-	<<set $key = "grace">>
-	<<redo>>
-<</link>>
-<<link "non-grace display">>
-	<<set $key = "non-grace">>
-	<<redo>>
-<</link>>
-<<link "remove key">>
-	<<unset $key>>
-	<<redo>>
-<</link>>
+Do your thing here.
