@@ -1,0 +1,45 @@
+{
+	"name": "@spectreforge/sugarcube-hotkey",
+	"version": "0.1.0-alpha.0",
+	"description": "Configurable keyboard shortcuts for SugarCube 2 stories",
+	"keywords": [
+		"twine",
+		"sugarcube",
+		"keyboard",
+		"shortcuts"
+	],
+	"homepage": "https://github.com/spectreforge/sugarshock/tree/main/packages/hotkey",
+	"bugs": "https://github.com/spectreforge/sugarshock/issues",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/spectreforge/sugarshock.git",
+		"directory": "packages/hotkey"
+	},
+	"license": "MIT",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/hotkey.d.ts",
+			"default": "./dist/hotkey.js"
+		},
+		"./hotkey.css": "./dist/hotkey.css"
+	},
+	"scripts": {
+		"build": "rollup -c",
+		"watch": "rollup -c -w --no-watch.clearScreen",
+		"typecheck": "tsc -p ."
+	},
+	"devDependencies": {
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@rollup/plugin-typescript": "^12.3.0",
+		"@spectreforge/tiny-jsx2dom": "workspace:^",
+		"@types/node": "~22",
+		"@types/twine-sugarcube": "~2.37.2",
+		"rollup": "^4.64.2",
+		"rollup-plugin-dts": "^6.5.1",
+		"tslib": "^2.8.1",
+		"typescript": "~6.0.3"
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"types": ["twine-sugarcube"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "@spectreforge/tiny-jsx2dom",
+		"rootDir": "./src",
+		"noEmit": true
+	},
+	"include": ["src"]
+}

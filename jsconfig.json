@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"module": "none",
+		"module": "preserve",
 		"target": "esnext",
 		"jsx": "react-jsx",
 		"checkJs": true,
@@ -9,8 +9,5 @@
 		"strictFunctionTypes": true,
 		"strict": true
 	},
-	"exclude": [
-		"node_modules",
-		"**/node_modules/*"
-	]
+	"exclude": ["packages", "node_modules", "**/node_modules/*"]
 }

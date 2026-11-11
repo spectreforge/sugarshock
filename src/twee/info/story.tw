@@ -1,7 +1,12 @@
 :: StoryTitle
 SugarShock
 
+:: StoryMenu
+
+[[Overview|Start]]
+
 :: Start
 Welcome to ''SugarShock'', a showcase of little helpers for the [[SugarCube 2|https://www.motoslave.net/sugarcube/2/]] story format for [[Twine|https://twinery.org/]].
 
+* [[Keyboard Shortcuts|Keyboard Shortcuts]]
 * [[Offline Support|Offline Support]]

@@ -1,6 +1,7 @@
 tmp/
 # build output
 build/
+dist/
 index.html
 offline-index.txt
 

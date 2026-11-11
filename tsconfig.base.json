@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"target": "es2025",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"verbatimModuleSyntax": true,
+		"erasableSyntaxOnly": true,
+		"lib": ["ES2025", "DOM"],
+		"strict": true,
+		"exactOptionalPropertyTypes": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"noUncheckedSideEffectImports": true,
+		"declaration": true,
+		"isolatedDeclarations": true
+	}
+}
