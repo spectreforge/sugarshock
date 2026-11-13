@@ -2,6 +2,8 @@
 // APIs which have been documented but haven't been added to the typings
 declare module "twine-sugarcube/settings" {
 	interface SettingsAPI {
+		has(name: string): boolean;
+
 		addValue(
 			name: string,
 			definition: {
@@ -9,12 +11,17 @@ declare module "twine-sugarcube/settings" {
 				onInit?(setting: { value: unknown }): void;
 			},
 		): void;
-		has(name: string): boolean;
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////
 // Undocumented but longtime stable APIs
+declare module "twine-sugarcube/settings" {
+	interface SettingsAPI {
+		delete(name: string): void;
+	}
+}
+
 declare module "twine-sugarcube/wiki" {
 	interface WikifierAPI {
 		/**

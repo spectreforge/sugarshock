@@ -19,7 +19,17 @@ import { LinkTracker } from "./hotkey-link-tracker";
 import { deregisterMacros, MACRO_ID, registerMacros } from "./hotkey-macros";
 import { isVersionLess } from "./hotkey-utils";
 
-const SETTING_KEY = "hotkey-settings";
+const SETTING_ID = {
+	BINDINGS: "hotkey-settings",
+	SHOW_HINTS: "hotkey-show-hints",
+} as const;
+Object.freeze(SETTING_ID);
+
+/**
+ * Hints are hidden via CSS (see `hotkey.css`) if this attribute is set to
+ * `hidden` on the root element.
+ */
+const HINTS_ATTRIBUTE = "hotkeyHints";
 
 export interface UiOptions {
 	/**
@@ -37,11 +47,30 @@ export interface UiOptions {
 	 * close the dialog on Escape by themselves.
 	 */
 	closeDialogOnEscape?: boolean;
+	/**
+	 * Whether or not shortcut hints should be shown by default.
+	 *
+	 * You can change the value programmatically through the SugarCube Setting API
+	 * with e.g. `Setting.setValue("hotkey-show-hints", false)` if
+	 * `showHintsToggle` has been enabled.
+	 *
+	 * @defaultvalue true
+	 */
+	showHintsDefault?: boolean;
+	/**
+	 * If false no "Show shortcut hints" toggle will be added to SugarCube's
+	 * Settings dialog. As a consequence it won't be possible to change the
+	 * `show-hints` state.
+	 *
+	 * @defaultvalue true
+	 */
+	showHintsToggle?: boolean;
 }
 
 export type Options = UiOptions & BehaviourOptions;
 
 class HotkeyPlugin {
+	readonly #showHintsToggle: boolean;
 	readonly #closeDialogOnEscape: boolean;
 	readonly #settings: HotkeySettings;
 	readonly #linkTracker: LinkTracker;
@@ -54,10 +83,14 @@ class HotkeyPlugin {
 			closeDialogOnEscape ??
 			!isVersionLess({ major: 2, minor: 37, patch: 3 }, SugarCube.version);
 		this.#settings = new HotkeySettings(localizer, options);
-		this.#settings.loadJSON(Setting.getValue(SETTING_KEY));
 
 		registerMacros(this.#settings);
 		this.#linkTracker = new LinkTracker(this.#settings);
+
+		this.#showHintsToggle = options.showHintsToggle ?? true;
+		this.#initializeSugarCubeSettings(options);
+
+		this.#linkTracker.refreshLinkAttributes();
 
 		document.addEventListener("keydown", this.#handleKeydown);
 		if (menuItem !== false) {
@@ -68,13 +101,54 @@ class HotkeyPlugin {
 		removeMenuItem();
 		closeSettingsDialog();
 		document.removeEventListener("keydown", this.#handleKeydown);
+
+		delete document.documentElement.dataset[HINTS_ATTRIBUTE];
+		nonDestructiveSettingDelete(SETTING_ID.BINDINGS);
+		if (this.#showHintsToggle) {
+			nonDestructiveSettingDelete(SETTING_ID.SHOW_HINTS);
+		}
 		this.#linkTracker.dispose();
 		deregisterMacros();
 	}
 
+	#initializeSugarCubeSettings({ showHintsDefault }: UiOptions): void {
+		showHintsDefault ??= true;
+		if (this.#showHintsToggle) {
+			const syncHintsVisibility = () =>
+				this.#updateHintVisibility(
+					Setting.getValue(SETTING_ID.SHOW_HINTS) ?? showHintsDefault,
+				);
+			Setting.addToggle(SETTING_ID.SHOW_HINTS, {
+				label: localizer.text("hotkeySugarCubeSettingsLabelShowHints"),
+				default: showHintsDefault,
+				onInit: syncHintsVisibility,
+				onChange: syncHintsVisibility,
+			});
+			syncHintsVisibility();
+		} else {
+			this.#updateHintVisibility(showHintsDefault);
+		}
+
+		Setting.addValue(SETTING_ID.BINDINGS, {
+			default: null,
+			// Only relevant if `initialize()` ran before SC loaded the settings, i.e.
+			// from the Story JavaScript.
+			onInit: ({ value }) => this.updateUserSettings(value),
+		});
+		this.#settings.loadJSON(Setting.getValue(SETTING_ID.BINDINGS));
+	}
+	#updateHintVisibility(v: boolean): void {
+		if (v) {
+			delete document.documentElement.dataset[HINTS_ATTRIBUTE];
+		} else {
+			document.documentElement.dataset[HINTS_ATTRIBUTE] = "hidden";
+		}
+	}
+
 	readonly openSettings = (): void => {
 		openSettingsDialog(localizer, this.#settings, {
-			onChange: () => Setting.setValue(SETTING_KEY, this.#settings.toJSON()),
+			onChange: () =>
+				Setting.setValue(SETTING_ID.BINDINGS, this.#settings.toJSON()),
 			onClose: () => this.#linkTracker.refreshLinkAttributes(),
 		});
 	};
@@ -136,6 +210,15 @@ class HotkeyPlugin {
 	}
 }
 
+function nonDestructiveSettingDelete(key: string): void {
+	const value = (settings as Record<string, unknown>)[key];
+	const hasValue = Object.hasOwn(settings, key);
+	Setting.delete(key);
+	if (hasValue) {
+		(settings as Record<string, unknown>)[key] = value;
+	}
+}
+
 let plugin: HotkeyPlugin | undefined;
 
 /**
@@ -149,20 +232,14 @@ let plugin: HotkeyPlugin | undefined;
 export function initialize(options: Options = {}): void {
 	dispose();
 	plugin = new HotkeyPlugin(options);
-
-	if (!Setting.has(SETTING_KEY)) {
-		Setting.addValue(SETTING_KEY, {
-			default: null,
-			// Only relevant if `initialize()` ran before SC loaded the settings, i.e.
-			// from the Story JavaScript. Otherwise the `HotkeyPlugin` ctor loads the
-			// stored user settings.
-			onInit: ({ value }) => plugin?.updateUserSettings(value),
-		});
-	}
 }
+
 /**
- * Removes all hooks and registrations except for the SugarCube `Setting`
- * registration which can't be undone.
+ * Removes all hooks and registrations including the SugarCube `Setting`
+ * registrations. Note that the user will lose their settings if
+ * `Setting.save()` is called between `Hotkey.dispose()` and the next
+ * `Hotkey.initialize()` (same as calling `Setting.save()` after settings have
+ * been loaded but before calling `Hotkey.initialize()`)
  */
 export function dispose(): void {
 	plugin?.dispose();
@@ -189,8 +266,17 @@ function checkEnvironment() {
 		);
 	}
 
+	const takenSettingIds = Object.values(SETTING_ID).filter((id) =>
+		Setting.has(id),
+	);
+	if (takenSettingIds.length > 0) {
+		throw new Error(
+			`Hotkey setting ids taken by another script: ${takenSettingIds.join(", ")}`,
+		);
+	}
+
 	const takenMacroIds = Object.values(MACRO_ID).filter(
-		(name) => Macro.has(name) || Macro.tags.has(name),
+		(id) => Macro.has(id) || Macro.tags.has(id),
 	);
 	if (takenMacroIds.length > 0) {
 		const takenMacros = takenMacroIds.map((name) => `<<${name}>>`).join(", ");
