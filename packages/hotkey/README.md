@@ -1,17 +1,31 @@
 # @spectreforge/sugarcube-hotkey
 
+```
+SugarShock
+    __          __  __
+   / /_  ____  / /_/ /_____  __  __
+  / __ \/ __ \/ __/ //_/ _ \/ / / /
+ / / / / /_/ / /_/ ,< /  __/ /_/ /
+/_/ /_/\____/\__/_/|_|\___/\__, /
+                          /____/
+```
+
 Keyboard shortcuts for [SugarCube 2](https://www.motoslave.net/sugarcube/2/)
 stories which players can rebind in a settings dialog. Requires SugarCube
 v2.37.0 or later.
 
 OOB features:
 
-- <kbd>←</kbd> / <kbd>→</kbd> for history navigation
-- <kbd>Space</kbd> for passages with a single link (after scrolling to the bottom)
+- <kbd>←</kbd> / <kbd>→</kbd> for history navigation.
+- <kbd>Space</kbd> for passages with a single link (after scrolling to the bottom).
 - <kbd>1</kbd>–<kbd>5</kbd> and <kbd>Q</kbd>–<kbd>T</kbd> for the first ten
   links of a passage. Each one is annotated with a small hint like `[1]`. The
   <kbd>6</kbd>–<kbd>0</kbd> keys can be used instead of
   <kbd>Q</kbd>–<kbd>T</kbd> as well as the numpad numbers.
+- Closes Dialogs on <kbd>Escape</kbd>.
+- Player toggle for hint display.
+
+The public API typings ([`hotkey.d.ts`](https://cdn.jsdelivr.net/npm/@spectreforge/sugarcube-hotkey/dist/hotkey.d.ts)) feature in-depth documentation for the plugin options.
 
 ## Installation
 
@@ -69,6 +83,7 @@ Hotkey.initialize({
 	},
 	keymap: { KeyI: "inventory", KeyJ: "journal" },
 	hints: { inventory: Hotkey.AUTO_HINT },
+	/*... other options ...*/
 });
 ```
 
@@ -94,6 +109,19 @@ All options are documented in `hotkey.d.ts`.
 - `data-hotkey-noimplicit` attribute: excludes a link (or all links within the
   element) from numbering
 - `implicitActions: false` option: no numbered links at all
+
+### Hint display
+
+By default the shortcut hints will be displayed and a SugarCube setting will be
+registered. These can be individually controlled on initialization like so:
+
+```js
+Hotkey.initialize({
+	showHintsDefault: false, // don't show visible hints by default
+	showHintsToggle: false, // don't let users change hint visibility themselves
+	/*... other options ...*/
+});
+```
 
 ## Localization
 

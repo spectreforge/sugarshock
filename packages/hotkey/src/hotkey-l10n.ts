@@ -22,6 +22,9 @@
  * Hotkey.initialize();
  */
 export const DEFAULT_STRINGS = {
+	// SugarCube's Settings dialog
+	hotkeySugarCubeSettingsLabelShowHints: "Show shortcut hints",
+
 	// dialog and its menu item
 	hotkeySettingsTitle: "Keyboard Settings",
 	hotkeySettingsHeaderAction: "Action",

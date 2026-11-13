@@ -53,6 +53,17 @@ a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
 }
 
 /*
+ * The player turned the hints off in SC's Settings dialog. The selectors mirror
+ * the ones above to leave SC's icons alone.
+ */
+:root[data-hotkey-hints="hidden"] {
+	a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
+	a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
+		display: none;
+	}
+}
+
+/*
  * To gain higher specificity than SC's own rules, we nest everything below the
  * dialog element id.
  */

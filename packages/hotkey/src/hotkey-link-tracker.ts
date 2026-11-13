@@ -79,12 +79,13 @@ export class LinkTracker {
 				content: passageEl,
 			};
 		}
-		this.refreshLinkAttributes();
 	}
 	dispose(): void {
 		jQuery(document).off(":passagerender", this.#trackPassage);
 		this.#linkObserver.disconnect();
 		this.#linkObserver.takeRecords();
+		this.#currentPassage &&
+			assignImplicitActions(this.#currentPassage.content, null);
 		for (const annotatedLink of this.#annotatedLinks) {
 			updateHint(this.#settings, annotatedLink, []);
 		}
@@ -106,13 +107,13 @@ export class LinkTracker {
 	 * outside of it, e.g. after the hints or bindings changed.
 	 */
 	refreshLinkAttributes(): void {
-		const enabled = !noHotkeyPassage();
+		const hotkeysEnabled = !noHotkeyPassage();
 
 		if (this.#currentPassage != null) {
 			const { name: passage, content } = this.#currentPassage;
 			const { numOverflowed } = assignImplicitActions(
 				content,
-				enabled && !noImplicitHotkeyPassage()
+				hotkeysEnabled && !noImplicitHotkeyPassage()
 					? this.#settings.implicitIds
 					: null,
 			);
@@ -129,7 +130,7 @@ export class LinkTracker {
 			this.#settings,
 			this.#annotatedLinks,
 			this.#currentPassage?.content,
-			enabled,
+			hotkeysEnabled,
 		);
 		// Prevent infinite recursive updates. Calling `assignImplicitActions`
 		// triggers the mutation observer which in turn calls this method.
