@@ -123,6 +123,23 @@ Hotkey.initialize({
 });
 ```
 
+The implicit actions are `continue` for the link of a passage with a single
+link (<kbd>Space</kbd>) and `continue0`-`continue9` for the numbered links. A
+single link is also bound to `continue0`, but stays unannotated because
+`continue` comes first and has no hint. If you want it to carry a hint like
+passages with many links, you can configure a hint for `continue` like so:
+
+```js
+Hotkey.initialize({
+	hints: { continue: "1" },
+	/*... other options ...*/
+});
+```
+
+N.B. a fixed hint won't follow the player rebinding of the `continue0` action.
+`Hotkey.AUTO_HINT` would follow the `continue` shortcut instead and show
+<kbd>␣</kbd> by default.
+
 ## Localization
 
 All UI strings are `l10nStrings` entries prefixed with `hotkey`, see
