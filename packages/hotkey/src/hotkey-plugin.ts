@@ -149,7 +149,7 @@ class HotkeyPlugin {
 				label: localizer.text("hotkeySugarCubeSettingsLabelHintStyle"),
 				desc: localizer.text(
 					"hotkeySugarCubeSettingsDescriptionHintStyle",
-					HINT_STYLE_BY_LABEL,
+					HINT_STYLE_LABELS,
 				),
 				list: [...HINT_LABELS],
 				default: defaultLabel,
