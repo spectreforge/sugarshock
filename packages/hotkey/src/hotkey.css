@@ -41,21 +41,39 @@
  * SC's icons take `::after` on external links (and `[data-icon-after]`) with
  * `font-family: sc-icons !important`. I'm not joining a `!important` fig,
  * therefore we show the hint in front of those links.
+ *
+ * The plain style is the default; `data-hotkey-hints` on the root element
+ * selects the other hint styles (see `HintStyle` in `hotkey-plugin.ts`).
  */
 a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
 a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
 	vertical-align: super;
 	/* screen readers are served by aria props => no alt text */
-	content: "[" attr(data-hotkey-hint) "]" / "";
+	content: attr(data-hotkey-hint) / "";
+	/* set apart from the link text without competing with it */
+	color: color-mix(in srgb, currentColor 75%, transparent);
 	font-size: smaller;
 	/* don't balloon lines with hints */
 	line-height: 0;
 }
+/* keeps the hint from running into the link text, e.g. "Room 2" + "3" */
+a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after {
+	margin-inline-start: 0.15em;
+}
+a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
+	margin-inline-end: 0.15em;
+}
 
 /*
- * The player turned the hints off in SC's Settings dialog. The selectors mirror
- * the ones above to leave SC's icons alone.
+ * The selectors below mirror the ones above to leave SC's icons alone.
  */
+:root[data-hotkey-hints="brackets"] {
+	a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
+	a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
+		content: "[" attr(data-hotkey-hint) "]" / "";
+	}
+}
+
 :root[data-hotkey-hints="hidden"] {
 	a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
 	a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {

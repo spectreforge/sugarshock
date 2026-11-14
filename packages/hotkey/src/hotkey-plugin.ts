@@ -17,19 +17,47 @@ import * as localizer from "./hotkey-i18n";
 import { installDefaultStrings } from "./hotkey-l10n";
 import { LinkTracker } from "./hotkey-link-tracker";
 import { deregisterMacros, MACRO_ID, registerMacros } from "./hotkey-macros";
-import { isVersionLess } from "./hotkey-utils";
+import {
+	isVersionLess,
+	objectTransform,
+	type Dictionary,
+} from "./hotkey-utils";
 
 const SETTING_ID = {
 	BINDINGS: "hotkey-settings",
-	SHOW_HINTS: "hotkey-show-hints",
+	HINT_STYLE: "hotkey-hint-style",
 } as const;
 Object.freeze(SETTING_ID);
 
 /**
- * Hints are hidden via CSS (see `hotkey.css`) if this attribute is set to
- * `hidden` on the root element.
+ * The hint style is applied via CSS (see `hotkey.css`) governed by this
+ * attribute on the root element.
  */
 const HINTS_ATTRIBUTE = "hotkeyHints";
+
+/**
+ * How shortcut hints are displayed:
+ * - `hidden`: no visible hints
+ * - `plain`: the bare hint, e.g. `1`
+ * - `brackets`: the hint in brackets, e.g. `[1]`
+ */
+export type HintStyle = "hidden" | "plain" | "brackets";
+
+/**
+ * N.B. these are saved as-is by SC's Setting API and therefore need to stay
+ * locale-independent and stable.
+ */
+const HINT_STYLE_LABELS = Object.freeze({
+	hidden: "\u2205", // empty set symbol
+	plain: "1",
+	brackets: "[1]",
+});
+const HINT_LABELS = Object.freeze(Object.values(HINT_STYLE_LABELS));
+const HINT_STYLE_BY_LABEL: Dictionary<string, HintStyle> = Object.freeze(
+	objectTransform(HINT_STYLE_LABELS, null, (es) =>
+		es.map(([style, label]) => [label, style]),
+	),
+);
 
 export interface UiOptions {
 	/**
@@ -48,29 +76,25 @@ export interface UiOptions {
 	 */
 	closeDialogOnEscape?: boolean;
 	/**
-	 * Whether or not shortcut hints should be shown by default.
+	 * How shortcut hints are displayed by default. The player can pick a
+	 * different style in SugarCube's Settings dialog.
 	 *
-	 * You can change the value programmatically through the SugarCube Setting API
-	 * with e.g. `Setting.setValue("hotkey-show-hints", false)` if
-	 * `showHintsToggle` has been enabled.
-	 *
-	 * @defaultvalue true
+	 * @defaultvalue "plain"
 	 */
-	showHintsDefault?: boolean;
+	hintStyleDefault?: HintStyle;
 	/**
-	 * If false no "Show shortcut hints" toggle will be added to SugarCube's
-	 * Settings dialog. As a consequence it won't be possible to change the
-	 * `show-hints` state.
+	 * If false no "Shortcut hints" setting will be added to SugarCube's Settings
+	 * dialog and `hintStyleDefault` always applies.
 	 *
 	 * @defaultvalue true
 	 */
-	showHintsToggle?: boolean;
+	hintStyleSetting?: boolean;
 }
 
 export type Options = UiOptions & BehaviourOptions;
 
 class HotkeyPlugin {
-	readonly #showHintsToggle: boolean;
+	readonly #hintStyleSetting: boolean;
 	readonly #closeDialogOnEscape: boolean;
 	readonly #settings: HotkeySettings;
 	readonly #linkTracker: LinkTracker;
@@ -87,7 +111,7 @@ class HotkeyPlugin {
 		registerMacros(this.#settings);
 		this.#linkTracker = new LinkTracker(this.#settings);
 
-		this.#showHintsToggle = options.showHintsToggle ?? true;
+		this.#hintStyleSetting = options.hintStyleSetting ?? true;
 		this.#initializeSugarCubeSettings(options);
 
 		this.#linkTracker.refreshLinkAttributes();
@@ -104,29 +128,37 @@ class HotkeyPlugin {
 
 		delete document.documentElement.dataset[HINTS_ATTRIBUTE];
 		nonDestructiveSettingDelete(SETTING_ID.BINDINGS);
-		if (this.#showHintsToggle) {
-			nonDestructiveSettingDelete(SETTING_ID.SHOW_HINTS);
+		if (this.#hintStyleSetting) {
+			nonDestructiveSettingDelete(SETTING_ID.HINT_STYLE);
 		}
 		this.#linkTracker.dispose();
 		deregisterMacros();
 	}
 
-	#initializeSugarCubeSettings({ showHintsDefault }: UiOptions): void {
-		showHintsDefault ??= true;
-		if (this.#showHintsToggle) {
-			const syncHintsVisibility = () =>
-				this.#updateHintVisibility(
-					Setting.getValue(SETTING_ID.SHOW_HINTS) ?? showHintsDefault,
+	#initializeSugarCubeSettings({ hintStyleDefault }: UiOptions): void {
+		hintStyleDefault ??= "plain";
+		if (this.#hintStyleSetting) {
+			const defaultLabel = HINT_STYLE_LABELS[hintStyleDefault];
+			// unknown values fall back to the default
+			const syncHintStyle = () =>
+				this.#updateHintStyle(
+					HINT_STYLE_BY_LABEL[Setting.getValue(SETTING_ID.HINT_STYLE)] ??
+						hintStyleDefault,
 				);
-			Setting.addToggle(SETTING_ID.SHOW_HINTS, {
-				label: localizer.text("hotkeySugarCubeSettingsLabelShowHints"),
-				default: showHintsDefault,
-				onInit: syncHintsVisibility,
-				onChange: syncHintsVisibility,
+			Setting.addList(SETTING_ID.HINT_STYLE, {
+				label: localizer.text("hotkeySugarCubeSettingsLabelHintStyle"),
+				desc: localizer.text(
+					"hotkeySugarCubeSettingsDescriptionHintStyle",
+					HINT_STYLE_BY_LABEL,
+				),
+				list: [...HINT_LABELS],
+				default: defaultLabel,
+				onInit: syncHintStyle,
+				onChange: syncHintStyle,
 			});
-			syncHintsVisibility();
+			syncHintStyle();
 		} else {
-			this.#updateHintVisibility(showHintsDefault);
+			this.#updateHintStyle(hintStyleDefault);
 		}
 
 		Setting.addValue(SETTING_ID.BINDINGS, {
@@ -137,12 +169,8 @@ class HotkeyPlugin {
 		});
 		this.#settings.loadJSON(Setting.getValue(SETTING_ID.BINDINGS));
 	}
-	#updateHintVisibility(v: boolean): void {
-		if (v) {
-			delete document.documentElement.dataset[HINTS_ATTRIBUTE];
-		} else {
-			document.documentElement.dataset[HINTS_ATTRIBUTE] = "hidden";
-		}
+	#updateHintStyle(style: HintStyle): void {
+		document.documentElement.dataset[HINTS_ATTRIBUTE] = style;
 	}
 
 	readonly openSettings = (): void => {
