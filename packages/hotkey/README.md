@@ -19,11 +19,11 @@ OOB features:
 - <kbd>←</kbd> / <kbd>→</kbd> for history navigation.
 - <kbd>Space</kbd> for passages with a single link (after scrolling to the bottom).
 - <kbd>1</kbd>–<kbd>5</kbd> and <kbd>Q</kbd>–<kbd>T</kbd> for the first ten
-  links of a passage. Each one is annotated with a small hint like `[1]`. The
+  links of a passage. Each one is annotated with a small hint like `1`. The
   <kbd>6</kbd>–<kbd>0</kbd> keys can be used instead of
   <kbd>Q</kbd>–<kbd>T</kbd> as well as the numpad numbers.
 - Closes Dialogs on <kbd>Escape</kbd>.
-- Player toggle for hint display.
+- Player setting for the hint style: hidden, plain `1` or bracketed `[1]`.
 
 The public API typings ([`hotkey.d.ts`](https://cdn.jsdelivr.net/npm/@spectreforge/sugarcube-hotkey/dist/hotkey.d.ts)) feature in-depth documentation for the plugin options.
 
@@ -112,13 +112,15 @@ All options are documented in `hotkey.d.ts`.
 
 ### Hint display
 
-By default the shortcut hints will be displayed and a SugarCube setting will be
-registered. These can be individually controlled on initialization like so:
+By default the shortcut hints are displayed in the `plain` style (e.g. `1`).
+Also by default a "Shortcut hints" setting is registered with which players can
+switch between the `hidden`, `plain` and `brackets` (e.g. `[1]`) styles. Both
+can be controlled on initialization like so:
 
 ```js
 Hotkey.initialize({
-	showHintsDefault: false, // don't show visible hints by default
-	showHintsToggle: false, // don't let users change hint visibility themselves
+	hintStyleDefault: "hidden", // don't show visible hints by default
+	hintStyleSetting: false, // don't let users change the hint style themselves
 	/*... other options ...*/
 });
 ```

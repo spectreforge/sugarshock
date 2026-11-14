@@ -23,7 +23,10 @@
  */
 export const DEFAULT_STRINGS = {
 	// SugarCube's Settings dialog
-	hotkeySugarCubeSettingsLabelShowHints: "Show shortcut hints",
+	hotkeySugarCubeSettingsLabelHintStyle: "Shortcut hints",
+	// the options are language-neutral samples passed in as vars
+	hotkeySugarCubeSettingsDescriptionHintStyle:
+		"Shows each link\u2019s keyboard shortcut next to it: plain ({plain}), in brackets ({brackets}) or not at all ({hidden}).",
 
 	// dialog and its menu item
 	hotkeySettingsTitle: "Keyboard Settings",

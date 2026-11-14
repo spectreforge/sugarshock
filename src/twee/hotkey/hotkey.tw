@@ -4,7 +4,7 @@ Keyboard shortcuts for [[SugarCube 2|https://www.motoslave.net/sugarcube/2/]] st
 OOB features:
 * <kbd>←</kbd> / <kbd>→</kbd> for history navigation
 * <kbd>Space</kbd> for passages with a single link (after scrolling to the bottom)
-* <kbd>1</kbd>–<kbd>5</kbd> and <kbd>Q</kbd>–<kbd>T</kbd> for the first ten links of a passage. Each one is annotated with a small hint like {{{[1]}}}. The <kbd>6</kbd>–<kbd>0</kbd> keys can be used instead of <kbd>Q</kbd>–<kbd>T</kbd> as well as the numpad numbers.
+* <kbd>1</kbd>–<kbd>5</kbd> and <kbd>Q</kbd>–<kbd>T</kbd> for the first ten links of a passage. Each one is annotated with a small hint like {{{1}}}, see the "Shortcut hints" setting. The <kbd>6</kbd>–<kbd>0</kbd> keys can be used instead of <kbd>Q</kbd>–<kbd>T</kbd> as well as the numpad numbers.
 
 !!!Installation
 The package ships three files in {{{dist/}}}:

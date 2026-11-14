@@ -4,6 +4,7 @@ export {
 	dispose,
 	initialize,
 	openSettings,
+	type HintStyle,
 	type Options,
 } from "./hotkey-plugin";
 export { AUTO_HINT } from "./hotkey-settings";
