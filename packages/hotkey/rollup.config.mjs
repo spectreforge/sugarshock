@@ -2,6 +2,7 @@
 /// <reference types="node" />
 
 import { readFileSync } from "node:fs";
+import { dirname, resolve, sep } from "node:path";
 
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
@@ -11,6 +12,8 @@ import packageJSON from "./package.json" with { type: "json" };
 
 const INPUT = "src/hotkey.ts";
 const GLOBAL_NAME = "Hotkey";
+
+const assetsPath = resolve(import.meta.dirname, "assets") + sep;
 
 const banner = `/*!
  * SugarShock
@@ -74,10 +77,32 @@ function copyStylesheet(path) {
 		name: "copy-stylesheet",
 		buildStart() {
 			this.addWatchFile(path);
+
+			// poor man's SVG inlining; we want to avoid shipping extra assets
+			// (if we need something smarter than this, we should switch to svgo)
+			const css = readFileSync(path, "utf8").replaceAll(
+				/url\("(\.{1,2}\/[^"]+\.svg)"\)/g,
+				(_, url) => {
+					const file = resolve(dirname(path), url);
+					if (!file.startsWith(assetsPath)) {
+						this.error(
+							`Tried inlining an SVG from outside of "./assets": ${file}`,
+						);
+					}
+					this.addWatchFile(file);
+					const svg = readFileSync(file, "utf8")
+						.replaceAll(/<!--[\s\S]*?-->/g, "") // strip comments
+						.replaceAll(/>\s+</g, "><") // strip formatting whitespace
+						.replaceAll(/\s+/g, " ") // collapse content whitespace
+						.trim();
+					return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+				},
+			);
+
 			this.emitFile({
 				type: "asset",
 				fileName: "hotkey.css",
-				source: `${banner}\n${readFileSync(path, "utf8")}`,
+				source: `${banner}\n${css}`,
 			});
 		},
 	};

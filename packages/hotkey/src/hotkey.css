@@ -82,6 +82,21 @@ a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
 }
 
 /*
+ * Icon of our menu item in the UI bar.
+ */
+#menu-item-hotkey-settings a::before {
+	display: inline-block;
+	vertical-align: -0.125em; /* match Font Awesome */
+	/* N.B. our rollup plugin inlines the SVG to avoid shipping asset files */
+	mask: url("../assets/keyboard-icon.svg") center / contain no-repeat;
+	margin-right: 0.35em; /* match SC's menu icons */
+	background-color: currentColor;
+	width: 1em;
+	height: 1em;
+	content: "" / "";
+}
+
+/*
  * To gain higher specificity than SC's own rules, we nest everything below the
  * dialog element id.
  */
