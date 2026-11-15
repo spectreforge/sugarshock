@@ -74,9 +74,20 @@ a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
 	}
 }
 
-:root[data-hotkey-hints="hidden"] {
-	a[data-hotkey-hint]:not(.link-external, [data-icon-after])::after,
-	a[data-hotkey-hint]:is(.link-external, [data-icon-after])::before {
+/*
+ * _Visually_ hides hotkey hints if...
+ * - ...the `hidden` hint style is active
+ * - ...the passage carries the `nohotkey-hint` tag (passage content only)
+ * - ...the link or a parent carries the `data-hotkey-nohint` attribute
+ */
+a[data-hotkey-hint]:is(
+		:root[data-hotkey-hints="hidden"] *,
+		.passage[data-tags~="nohotkey-hint"] *,
+		[data-hotkey-nohint],
+		[data-hotkey-nohint] *
+	) {
+	&:not(.link-external, [data-icon-after])::after,
+	&:is(.link-external, [data-icon-after])::before {
 		display: none;
 	}
 }

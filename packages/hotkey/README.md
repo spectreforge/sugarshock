@@ -116,6 +116,9 @@ All options are documented in `hotkey.d.ts`.
 - `data-hotkey-noimplicit` attribute: excludes a link (or all links within the
   element) from numbering
 - `implicitActions: false` option: no numbered links at all
+- `nohotkey-hint` passage tag: visually hide hotkey hints within this passage
+- `data-hotkey-nohint` attribute: hides the hint of a link (or all links within
+  the element)
 
 ### Hint display
 
