@@ -35,6 +35,8 @@ export const DEFAULT_STRINGS = {
 	hotkeySettingsHeaderHint: "Hint",
 	// the visually hidden name for the column of the reset buttons
 	hotkeySettingsHeaderReset: "Reset",
+	hotkeySettingsButtonImport: "Import\u2026",
+	hotkeySettingsButtonExport: "Export\u2026",
 	hotkeySettingsButtonResetAll: "Reset All to Default",
 
 	// built-in actions
@@ -75,6 +77,11 @@ export const DEFAULT_STRINGS = {
 		"{action} was reset to default, taking back its default shortcuts if needed.",
 	hotkeySettingsStatusResetAll:
 		"All shortcuts and hints were reset to default.",
+	hotkeySettingsStatusImported: "Shortcuts and hints were imported.",
+	hotkeySettingsStatusImportFailed: "The file couldn't be imported.",
+	hotkeySettingsStatusExported: "Shortcuts and hints were exported.",
+	hotkeySettingsStatusExportFailed:
+		"The shortcuts and hints couldn't be exported.",
 
 	// "About Shortcuts", the {key...} placeholders become key chips
 	hotkeyHelpTitle: "About Shortcuts",

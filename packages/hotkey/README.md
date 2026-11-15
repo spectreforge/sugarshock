@@ -24,6 +24,7 @@ OOB features:
   <kbd>Q</kbd>–<kbd>T</kbd> as well as the numpad numbers.
 - Closes Dialogs on <kbd>Escape</kbd>.
 - Player setting for the hint style: hidden, plain `1` or bracketed `[1]`.
+- Players can export their shortcuts and hints to a file and import them again.
 
 The public API typings ([`hotkey.d.ts`](https://cdn.jsdelivr.net/npm/@spectreforge/sugarcube-hotkey/dist/hotkey.d.ts)) feature in-depth documentation for the plugin options.
 
@@ -68,6 +69,12 @@ Hotkey.initialize();
 ```
 
 That's it. A "Keyboard Settings" item will be added to the UI bar and the players' changed bindings will be persisted with SugarCube's settings.
+
+The dialog also lets players export their bindings and hints to
+`<Story.id>.hotkeys.json` and import such a file later, e.g. to carry them
+over to another browser. Importing replaces all current bindings and hints.
+Bindings and hints for actions that no longer exist are dropped, so keep your
+action ids stable between releases.
 
 ### Custom actions
 

@@ -24,6 +24,8 @@ const MENU_ITEM_ID = "menu-item-hotkey-settings";
 const CONTROL = Object.freeze({ ADD: "add", RESET: "reset" });
 type Control = (typeof CONTROL)[keyof typeof CONTROL];
 
+const EXPORT_MARKER_VALUE = "hotkey-settings";
+
 /**
  * Adds or relabels the menu item.
  *
@@ -139,6 +141,13 @@ export function HotkeySettingsPanel({
 	// assigned via `ref`
 	let tbody!: HTMLTableSectionElement;
 	let status!: HTMLParagraphElement;
+	let fileInput!: HTMLInputElement;
+
+	/**
+	 * Set while an import is in progress. Should guard against surprises between
+	 * actions affecting the complete hotkeySettings.
+	 */
+	let importInProgress = false;
 
 	const root = (
 		<div className="hotkey-settings">
@@ -167,15 +176,69 @@ export function HotkeySettingsPanel({
 					role="status"
 					ref={(el) => (status = el)}
 				/>
-				<button
-					type="button"
+				{/* the file picker is opened through the styled button below */}
+				<input
+					type="file"
+					hidden
+					ref={(el) => (fileInput = el)}
+					accept=".json,application/json"
+					onchange={() => {
+						const file = fileInput.files?.[0];
+						fileInput.value = ""; // clear input to allow selecting the same file
+						if (file && !importInProgress) {
+							importInProgress = true;
+							loadSettings(file)
+								.then(
+									(serialized) => {
+										if (!closeSignal.aborted) {
+											hotkeySettings.loadJSON(serialized);
+											onDestructiveChange(
+												localizer.text("hotkeySettingsStatusImported"),
+											);
+										}
+									},
+									(error) => {
+										console.error(error);
+										!closeSignal.aborted &&
+											announce(
+												localizer.text("hotkeySettingsStatusImportFailed"),
+											);
+									},
+								)
+								.finally(() => void (importInProgress = false));
+						}
+					}}
+				/>
+				<Button onclick={() => importInProgress || fileInput.click()}>
+					{localizer.text("hotkeySettingsButtonImport")}
+				</Button>
+				<Button
 					onclick={() => {
+						if (importInProgress) {
+							return;
+						}
+						try {
+							exportSettings(hotkeySettings);
+							announce(localizer.text("hotkeySettingsStatusExported"));
+						} catch (error) {
+							console.error(error);
+							announce(localizer.text("hotkeySettingsStatusExportFailed"));
+						}
+					}}
+				>
+					{localizer.text("hotkeySettingsButtonExport")}
+				</Button>
+				<Button
+					onclick={() => {
+						if (importInProgress) {
+							return;
+						}
 						hotkeySettings.resetToDefaults();
 						onDestructiveChange(localizer.text("hotkeySettingsStatusResetAll"));
 					}}
 				>
 					{localizer.text("hotkeySettingsButtonResetAll")}
-				</button>
+				</Button>
 			</div>
 		</div>
 	);
@@ -532,6 +595,74 @@ export function HotkeySettingsPanel({
 			{ capture: true, signal: captureAbortSignal },
 		);
 	}
+}
+
+type ExportEnvelopeBase = {
+	format: typeof EXPORT_MARKER_VALUE;
+	// this version governs the file format but not the settings serialization
+	version: unknown;
+};
+type ExportEnvelopeV0 = {
+	format: typeof EXPORT_MARKER_VALUE;
+	version: 0;
+	data: object | null;
+};
+
+/**
+ * Loads a settings POJO from a user provided file.
+ */
+async function loadSettings(file: File): Promise<object | null> {
+	if (file.size > 64 * 2 ** 10) {
+		throw new Error("Valid hotkey settings should never exceed 64Kib");
+	}
+	const json = await file.text();
+	const envelope = JSON.parse(json) as unknown;
+
+	if (envelope == null || typeof envelope !== "object") {
+		throw new Error(`Invalid primitive hotkey settings import datatype`);
+	} else if (!isFormatShape(envelope)) {
+		throw new Error(
+			`The given settings file doesn't contain data of the right format`,
+		);
+	} else if (!isV0Shape(envelope)) {
+		throw new Error(`Unknown version format: ${envelope.version}`);
+	}
+	return envelope.data;
+
+	function isFormatShape(v: object): v is ExportEnvelopeBase {
+		return "format" in v && v.format === EXPORT_MARKER_VALUE && "version" in v;
+	}
+	function isV0Shape(v: ExportEnvelopeBase): v is ExportEnvelopeV0 {
+		return v.version === 0;
+	}
+}
+
+/**
+ * Initiates saving the current settings to a file.
+ */
+function exportSettings(settings: HotkeySettings): void {
+	const envelope: ExportEnvelopeV0 = {
+		format: EXPORT_MARKER_VALUE,
+		version: 0,
+		data: settings.toJSON(),
+	};
+	const json = JSON.stringify(envelope);
+
+	const blobUrl = URL.createObjectURL(
+		new Blob([json], {
+			type: "application/json",
+		}),
+	);
+
+	let aRef!: HTMLAnchorElement;
+	<a
+		ref={(ref) => (aRef = ref)}
+		href={blobUrl}
+		download={`${Story.id}.hotkeys.json`}
+	/>;
+	aRef.click();
+
+	URL.revokeObjectURL(blobUrl);
 }
 
 function Button(props: IntrinsicProps<"button">): JSX.Element {
